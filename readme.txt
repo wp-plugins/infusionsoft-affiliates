@@ -32,15 +32,16 @@ All your custom affiliate fields get pulled down, too, just don't forget to put 
 == Installation ==
 
 To install the plugin:
-   1. Download the plugin
-   2. Upload to your wordpress blog
-   3. Activate and Configure
+1. Download the plugin
+2. Upload to your wordpress blog
+3. Activate and Configure
 
 = Configuration =
 
 To configure your installation, click Settings and then select enter your Infusionsoft Application name and API Key.
 
-== Updates ==
+== Changelog ==
 
 7/6: Version 0.2 Added
 7/6: Version 0.3 Added dateshift option for dates so you can move make relative dates 
+7/6: Version 0.3 Fixed bug so you can now access settings right from the plugin listing

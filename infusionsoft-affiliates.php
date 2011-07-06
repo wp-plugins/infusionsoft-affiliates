@@ -127,7 +127,7 @@ function infusionsoftaffiliates_load($code)
 }
 
 function infusionsoftaffiliates_plugin_action_links( $links, $file ) {
-	if ( $file == plugin_basename( dirname(__FILE__).'/infusionsoftaffiliates.php' ) ) {
+	if ( $file == plugin_basename( dirname(__FILE__).'/infusionsoft-affiliates.php' ) ) {
 		$links[] = '<a href="options-general.php?page=infusionsoftaffiliates">'.__('Settings').'</a>';
 	}
 
