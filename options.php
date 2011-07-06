@@ -26,10 +26,11 @@ Please enter your Infusionsoft API Key below so that we can access affiliates fr
 <td>
   <select name="affiliate_caching">
     <option value="none" <?php if (get_option('affiliate_caching') == 'none') echo "selected=selected" ?>>Do Not Cache</option>
-    <option value="5"  <?php if (get_option('affiliate_caching') == '5') echo "selected=selected" ?> disabled>Refresh every 5 minutes</option>
-    <option value="60"  <?php if (get_option('affiliate_caching') == '60') echo "selected=selected" ?> disabled>Refresh Hourly</option>
-    <option value="3600"  <?php if (get_option('affiliate_caching') == '3600') echo "selected=selected" ?> disabled>Refresh Daily</option>
+    <option value="5"  <?php if (get_option('affiliate_caching') == '5') echo "selected=selected" ?> >Cache at most 5 minutes</option>
+    <option value="60"  <?php if (get_option('affiliate_caching') == '60') echo "selected=selected" ?> >Cache at most Hourly</option>
+    <option value="1440"  <?php if (get_option('affiliate_caching') == '1440') echo "selected=selected" ?> >Cache at most Daily</option>
   </select>
+  &nbsp; <?php echo( (get_option('affiliates_lastsync') != '') ? "Last synced ".human_time_diff(get_option('affiliates_lastsync'))." ago" : "Not yet synched"); ?>
 </td>
 </tr>
 

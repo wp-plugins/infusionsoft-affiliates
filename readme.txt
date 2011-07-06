@@ -25,7 +25,7 @@ For fields that are dates, you can specify a [PHP friendly date format](http://p
 
 Additionally, for date fields, you can move a date forward or backwards in time with the `dateshift` option like [affiliate field="_WebinarDate" default="3 days before our webinar" format="l, F jS" dateshift=" -3 days" /]
 
-`dateshift` should start with a `+` or a `-` followed by a number and then a unit, for example `- 1 day`, `+90 minutes`, or `+1 year`.
+When using `dateshift`, the value should start with a `+` or a `-` followed by a number and then a unit, for example `- 1 day`, `+90 minutes`, or `+1 year`.
 
 All your custom affiliate fields get pulled down, too, just don't forget to put the underscore in front, i.e. _YourCustomField.
 
@@ -42,6 +42,7 @@ To configure your installation, click Settings and then select enter your Infusi
 
 == Changelog ==
 
-7/6: Version 0.2 Added
-7/6: Version 0.3 Added dateshift option for dates so you can move make relative dates 
-7/6: Version 0.3 Fixed bug so you can now access settings right from the plugin listing
+* 7/6/2011: Version 0.2 Added
+* 7/6/2011: Version 0.3 Added dateshift option for dates so you can move make relative dates 
+* 7/6/2011: Version 0.3 Fixed bug so you can now access settings right from the plugin listing
+* 7/6/2011: Version 0.3 Caching is now supported and deactivation no longer deletes options and data
