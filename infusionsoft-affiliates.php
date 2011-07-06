@@ -3,7 +3,7 @@
 Plugin Name: Infusionsoft Affiliates
 Plugin URI: http://asandia.com/wordpress-plugins/infusionsoft-affiliates/
 Description: Short Codes to insert a given Infusionsoft affiliates' info
-Version: 0.2
+Version: 0.3
 Author: Jeremy Shapiro
 Author URI: http://www.asandia.com/
 */
@@ -22,11 +22,15 @@ function infusionsoftaffiliate_print($atts, $content) {
   $atts = shortcode_atts(array(
 	'field'		=> '',
 	'format'	=> '',
+	'dateshift'	=> '',
         'default'        => ''
         ), $atts);
 
   $val = ($infusionsoftaffiliate[strtolower($atts['field'])]) ? $infusionsoftaffiliate[strtolower($atts['field'])] : $atts['default'];
 
+  if(($atts['dateshift'] != '') && strtotime($val.' '.$atts['dateshift'])) {
+    $val = date('Y-m-d H:i:s', strtotime($val.' '.$atts['dateshift']));
+  }
   if(($atts['format'] != '') && strtotime($val)) {
     $val = date($atts['format'], strtotime($val));
   }
@@ -84,6 +88,15 @@ function infusionsoftaffiliates_checkrequest() {
   if($code = infusionsoftaffiliates_findcode())
   {
 	$infusionsoftaffiliate = infusionsoftaffiliates_load($code);
+	if($codes = preg_split('/\,\s*/', get_option('affiliatecode_names')))
+	{
+		$codename = $codes[0];
+	} else {
+		$codename = 'affcode';
+	}
+        
+	$url = parse_url(site_url());
+	setcookie($codename, $code, time()+(3600*24*30), empty($url['path']) ? '/' : $url['path'], $url['host']);
   }
 
 }
@@ -94,6 +107,10 @@ function infusionsoftaffiliates_findcode() {
      if($_REQUEST[$codename])
      {
          return $_REQUEST[$codename];
+     }
+     if($_COOKIE[$codename])
+     {
+         return $_COOKIE[$codename];
      }
   }
 }
@@ -121,7 +138,7 @@ add_filter( 'plugin_action_links', 'infusionsoftaffiliates_plugin_action_links',
 
 register_activation_hook(__FILE__,     'activate_infusionsoftaffiliates');
 register_deactivation_hook(__FILE__, 'deactivate_infusionsoftaffiliates');
-add_action('wp_head', 'infusionsoftaffiliates_checkrequest');
+add_action('send_headers', 'infusionsoftaffiliates_checkrequest');
 
 if (is_admin()) {
   add_action('admin_init', 'admin_init_infusionsoftaffiliates');
