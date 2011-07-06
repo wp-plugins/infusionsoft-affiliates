@@ -38,12 +38,14 @@ function infusionsoftaffiliate_print($atts, $content) {
   return $val;
 }
 
+
 function activate_infusionsoftaffiliates() {
   add_option('infusionsoft_apikey');
   add_option('infusionsoft_appname');
   add_option('affiliate_caching', 'none');
   add_option('affiliate_load', 'param');
   add_option('affiliatecode_names', 'code,affcode');
+  add_option('affiliates_lastsync');
 
    global $wpdb;
    $sql = "CREATE TABLE " . $wpdb->prefix . "infusionsoftaffiliates (
@@ -56,11 +58,16 @@ function activate_infusionsoftaffiliates() {
 }
 
 function deactivate_infusionsoftaffiliates() {
+  # for now, deactivate shouldn't do anything
+}
+
+function uninstall_infusionsoftaffiliates() {
   delete_option('infusionsoft_apikey');
   delete_option('infusionsoft_appname');
   delete_option('affiliate_caching');
   delete_option('affiliate_load');
   delete_option('affiliatecode_names');
+  delete_option('affiliates_lastsync');
 
    global $wpdb;
    $wpdb->query("DROP TABLE ".$wpdb->prefix . "infusionsoftaffiliates;");
@@ -117,7 +124,11 @@ function infusionsoftaffiliates_findcode() {
 
 function infusionsoftaffiliates_load($code)
 {
-	if (get_option('affiliate_caching') == 'none')
+	$caching = get_option('affiliate_caching');
+	if (($caching == 'none') || (
+		is_numeric($caching) && (
+			(time() - get_option('affiliates_lastsync')) > (60 * $caching)
+		)))
 	{
 		syncaffiliates();
 	}
@@ -138,6 +149,7 @@ add_filter( 'plugin_action_links', 'infusionsoftaffiliates_plugin_action_links',
 
 register_activation_hook(__FILE__,     'activate_infusionsoftaffiliates');
 register_deactivation_hook(__FILE__, 'deactivate_infusionsoftaffiliates');
+register_uninstall_hook(__FILE__, 'uninstall_infusionsoftaffiliates');
 add_action('send_headers', 'infusionsoftaffiliates_checkrequest');
 
 if (is_admin()) {
@@ -224,6 +236,8 @@ function syncaffiliates() {
       }
       $wpdb->insert($wpdb->prefix . "infusionsoftaffiliates", array_change_key_case($aff));
    }
+
+   update_option('affiliates_lastsync', time());
 
 }
 

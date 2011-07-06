@@ -25,7 +25,7 @@ For fields that are dates, you can specify a [PHP friendly date format](http://p
 
 Additionally, for date fields, you can move a date forward or backwards in time with the `dateshift` option like [affiliate field="_WebinarDate" default="3 days before our webinar" format="l, F jS" dateshift=" -3 days" /]
 
-`dateshift` should start with a `+`+ or a `-` followed by a number and then a unit, for example `- 1 day`, `+90 minutes`, or `+1 year`.
+`dateshift` should start with a `+` or a `-` followed by a number and then a unit, for example `- 1 day`, `+90 minutes`, or `+1 year`.
 
 All your custom affiliate fields get pulled down, too, just don't forget to put the underscore in front, i.e. _YourCustomField.
 
