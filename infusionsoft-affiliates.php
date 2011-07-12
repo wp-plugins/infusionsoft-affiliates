@@ -3,7 +3,7 @@
 Plugin Name: Infusionsoft Affiliates
 Plugin URI: http://asandia.com/wordpress-plugins/infusionsoft-affiliates/
 Description: Short Codes to insert a given Infusionsoft affiliates' info
-Version: 0.3
+Version: 0.4
 Author: Jeremy Shapiro
 Author URI: http://www.asandia.com/
 */
@@ -45,6 +45,8 @@ function activate_infusionsoftaffiliates() {
   add_option('affiliate_caching', 'none');
   add_option('affiliate_load', 'param');
   add_option('affiliatecode_names', 'code,affcode');
+  add_option('affiliate_defaultpage');
+  add_option('noaffiliate_defaultpage');
   add_option('affiliates_lastsync');
 
    global $wpdb;
@@ -67,6 +69,8 @@ function uninstall_infusionsoftaffiliates() {
   delete_option('affiliate_caching');
   delete_option('affiliate_load');
   delete_option('affiliatecode_names');
+  delete_option('affiliate_defaultpage');
+  delete_option('noaffiliate_defaultpage');
   delete_option('affiliates_lastsync');
 
    global $wpdb;
@@ -79,6 +83,8 @@ function admin_init_infusionsoftaffiliates() {
   register_setting('infusionsoftaffiliates', 'affiliate_caching');
   register_setting('infusionsoftaffiliates', 'affiliate_load');
   register_setting('infusionsoftaffiliates', 'affiliatecode_names');
+  register_setting('infusionsoftaffiliates', 'affiliate_defaultpage');
+  register_setting('infusionsoftaffiliates', 'noaffiliate_defaultpage');
 }
 
 function admin_menu_infusionsoftaffiliates() {
@@ -103,19 +109,44 @@ function infusionsoftaffiliates_checkrequest() {
 	}
         
 	$url = parse_url(site_url());
-	setcookie($codename, $code, time()+(3600*24*30), empty($url['path']) ? '/' : $url['path'], $url['host']);
+
+	if (($_SERVER['REQUEST_URI'] == '/') && get_option('affiliate_defaultpage'))
+	{
+		$newurl = get_permalink(get_option('affiliate_defaultpage'));
+		wp_redirect($newurl);
+		setcookie($codename, $code, time()+(3600*24*30), empty($url['path']) ? '/' : $url['path'], $url['host']);
+		exit;
+	} else {
+		setcookie($codename, $code, time()+(3600*24*30), empty($url['path']) ? '/' : $url['path'], $url['host']);
+	}
+
+  } else if(get_option('noaffiliate_defaultpage')) {
+	$newurl = get_permalink(get_option('noaffiliate_defaultpage'));
+	$newpath = parse_url($newurl);
+	$newpath = $newpath['path'];
+
+	if($newpath != $_SERVER['REQUEST_URI'])
+	{
+		wp_redirect($newurl);
+		exit;
+	}
   }
 
 }
 
 function infusionsoftaffiliates_findcode() {
+  $loadwhen = get_option('affiliate_load');
+  $loadwhen_param = (($loadwhen == 'param') || ($loadwhen == 'request'));
+  $loadwhen_cookie = (($loadwhen == 'cookie') || ($loadwhen == 'request') || ($loadwhen == 'root'));
+  $loadwhen_root = (($loadwhen == 'root'));  
+
   foreach(preg_split('/\,\s*/', get_option('affiliatecode_names') ) as $codename)
   {
-     if($_REQUEST[$codename])
+     if($loadwhen_param && $_REQUEST[$codename])
      {
          return $_REQUEST[$codename];
      }
-     if($_COOKIE[$codename])
+     if($loadwhen_cookie && $_COOKIE[$codename])
      {
          return $_COOKIE[$codename];
      }
