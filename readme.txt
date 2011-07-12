@@ -5,7 +5,7 @@ Requires at least: 2.0.2
 Tested up to: 4.3
 Stable tag: 0.4
 
-This plugin allows you to load an Infusionsoft Affiliate's information into your wordpress pages using the `[affiliate]` shortcode.
+This plugin allows you to load an Infusionsoft Affiliate's information into your wordpress pages using the [affiliate] shortcode.
 
 == Description ==
 
@@ -23,7 +23,7 @@ You can also specify a `default` value like `[affiliate field="AffName" default=
 
 For fields that are dates, you can specify a [PHP friendly date format](http://php.net/manual/en/function.date.php), for example `[affiliate field="_WebinarDate" format="l, f Js" /]`.
 
-Additionally, for date fields, you can move a date forward or backwards in time with the `dateshift` option like [affiliate field="_WebinarDate" default="3 days before our webinar" format="l, F jS" dateshift=" -3 days" /]
+Additionally, for date fields, you can move a date forward or backwards in time with the `dateshift` option like `[affiliate field="_WebinarDate" default="3 days before our webinar" format="l, F jS" dateshift=" -3 days" /]`
 
 When using `dateshift`, the value should start with a `+` or a `-` followed by a number and then a unit, for example `- 1 day`, `+90 minutes`, or `+1 year`.
 
@@ -43,13 +43,13 @@ If you need help with a custom installation or modification to better integrate 
 
 == Changelog ==
 
-= Version 0.2 =
-* 7/6/2011: Version 0.2 Added
+= Version 0.4 =
+* 7/11/2011: Default pages are now supported for when an affiliate code is found, but no path is specified, or when an affiliate code is simply not found.
 
 = Version 0.3 =
 * 7/6/2011: Version 0.3 Added dateshift option for dates so you can move make relative dates 
 * 7/6/2011: Version 0.3 Fixed bug so you can now access settings right from the plugin listing
 * 7/6/2011: Version 0.3 Caching is now supported and deactivation no longer deletes options and data
 
-= Version 0.4 =
-* 7/11/2011: Default pages are now supported for when an affiliate code is found, but no path is specified, or when an affiliate code is simply not found.
+= Version 0.2 =
+* 7/6/2011: Version 0.2 Added
