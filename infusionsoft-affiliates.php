@@ -3,7 +3,7 @@
 Plugin Name: Infusionsoft Affiliates
 Plugin URI: http://asandia.com/wordpress-plugins/infusionsoft-affiliates/
 Description: Short Codes to insert a given Infusionsoft affiliates' info
-Version: 0.4
+Version: 0.5
 Author: Jeremy Shapiro
 Author URI: http://www.asandia.com/
 */
@@ -40,10 +40,15 @@ function infusionsoftaffiliate_print($atts, $content) {
 
 
 function activate_infusionsoftaffiliates() {
+  $legacyload = get_option('affiliate_load');
+  delete_option('affiliate_load');
+
   add_option('infusionsoft_apikey');
   add_option('infusionsoft_appname');
-  add_option('affiliate_caching', 'none');
-  add_option('affiliate_load', 'param');
+  add_option('affiliate_caching', '60');
+  add_option('affiliate_load_param',  !$legacyload || ($legacyload == 'param') || ($legacyload == 'request'));
+  add_option('affiliate_load_root', '1');
+  add_option('affiliate_load_cookie', !$legacyload || ($legacyload == 'cookie') || ($legacyload == 'request'));
   add_option('affiliatecode_names', 'code,affcode');
   add_option('affiliate_defaultpage');
   add_option('noaffiliate_defaultpage');
@@ -67,7 +72,10 @@ function uninstall_infusionsoftaffiliates() {
   delete_option('infusionsoft_apikey');
   delete_option('infusionsoft_appname');
   delete_option('affiliate_caching');
-  delete_option('affiliate_load');
+  delete_option('affiliate_load');		# Legacy, pre v0.5
+  delete_option('affiliate_load_param');
+  delete_option('affiliate_load_root');
+  delete_option('affiliate_load_cookie');
   delete_option('affiliatecode_names');
   delete_option('affiliate_defaultpage');
   delete_option('noaffiliate_defaultpage');
@@ -81,7 +89,9 @@ function admin_init_infusionsoftaffiliates() {
   register_setting('infusionsoftaffiliates', 'infusionsoft_appname');
   register_setting('infusionsoftaffiliates', 'infusionsoft_apikey');
   register_setting('infusionsoftaffiliates', 'affiliate_caching');
-  register_setting('infusionsoftaffiliates', 'affiliate_load');
+  register_setting('infusionsoftaffiliates', 'affiliate_load_param');
+  register_setting('infusionsoftaffiliates', 'affiliate_load_root');
+  register_setting('infusionsoftaffiliates', 'affiliate_load_cookie');
   register_setting('infusionsoftaffiliates', 'affiliatecode_names');
   register_setting('infusionsoftaffiliates', 'affiliate_defaultpage');
   register_setting('infusionsoftaffiliates', 'noaffiliate_defaultpage');
@@ -100,24 +110,19 @@ function infusionsoftaffiliates_checkrequest() {
 
   if($code = infusionsoftaffiliates_findcode())
   {
-	$infusionsoftaffiliate = infusionsoftaffiliates_load($code);
-	if($codes = preg_split('/\,\s*/', get_option('affiliatecode_names')))
+	if(!$infusionsoftaffiliate)	# if it was a root, we already loaded the affiliate
 	{
-		$codename = $codes[0];
-	} else {
-		$codename = 'affcode';
+		$infusionsoftaffiliate = infusionsoftaffiliates_load($code);
 	}
-        
-	$url = parse_url(site_url());
 
 	if (($_SERVER['REQUEST_URI'] == '/') && get_option('affiliate_defaultpage'))
 	{
 		$newurl = get_permalink(get_option('affiliate_defaultpage'));
 		wp_redirect($newurl);
-		setcookie($codename, $code, time()+(3600*24*30), empty($url['path']) ? '/' : $url['path'], $url['host']);
+		infusionsoftaffiliates_setcookie($code);
 		exit;
 	} else {
-		setcookie($codename, $code, time()+(3600*24*30), empty($url['path']) ? '/' : $url['path'], $url['host']);
+		infusionsoftaffiliates_setcookie($code);
 	}
 
   } else if(get_option('noaffiliate_defaultpage')) {
@@ -134,19 +139,65 @@ function infusionsoftaffiliates_checkrequest() {
 
 }
 
-function infusionsoftaffiliates_findcode() {
-  $loadwhen = get_option('affiliate_load');
-  $loadwhen_param = (($loadwhen == 'param') || ($loadwhen == 'request'));
-  $loadwhen_cookie = (($loadwhen == 'cookie') || ($loadwhen == 'request') || ($loadwhen == 'root'));
-  $loadwhen_root = (($loadwhen == 'root'));  
+
+function infusionsoftaffiliates_setcookie($code)
+{
+	$codename = infusionsoftaffiliates_defaultcodename();
+	$url = parse_url(site_url());
+	setcookie($codename, $code, time()+(3600*24*30), empty($url['path']) ? '/' : $url['path'], $url['host']);
+}
+
+function infusionsoftaffiliates_defaultcodename()
+{
+	if($codes = preg_split('/\,\s*/', get_option('affiliatecode_names')))
+	{
+		return $codes[0];
+	} else {
+		return 'affcode';
+	}
+}       
+
+
+function infusionsoftaffiliates_findcode()
+{
+#  Bugger: When Infusionsoft redirects from an affiliate redirect URL (http://appname.infusionsoft.com/go/linkcode/affiliatecode)
+#	the headers to this page don't provide any indication as to what page we came from . . . back to the drawing board!
+#  if(get_option('affiliate_load_infusionurl') && preg_match('\.infusionsoft\.com/\/go\/([^\/]+)\/([^\/]+)/i', wp_get_referer(), $matches))
+#  {
+#	return $matches[2];	# $matches[1] is the referring affiliate code FWIW
+#  }
+
+  if(get_option('affiliate_load_root'))
+  {
+	$urlparts = explode('/', $_SERVER['REQUEST_URI']);
+	array_shift($urlparts);
+	if($root = array_shift($urlparts))
+	{
+		global $infusionsoftaffiliate;
+		if($infusionsoftaffiliate = infusionsoftaffiliates_load($root))
+		{
+# Until I can figure out how the heck to unshift the affiliate code from the url and have WordPress go about it's business normally
+# parsing the URL and service up the page, I see no other solution than forcing a redirect. Not a great option, but it'll work if the
+# param or cookie option are enabled... If you are reading this and can know how to have WP ignore the affiliate code at the root of
+# the URL and process normally beyond that, please submit a patch to me and if it works, I'll send you a box of tasty cookies! :) - Jeremy
+#			# [Magic URL Changing Code Goes Here]
+#			return $root;
+
+			wp_redirect(site_url().'/'.implode('/', $urlparts).'?'.infusionsoftaffiliates_defaultcodename().'='.$root);
+			infusionsoftaffiliates_setcookie($root);
+			exit;
+
+		}	# were we able to load an affiliate based on the root?
+	}	# was there a base to the URL?
+  }	# check the URL root for an affiliate code
 
   foreach(preg_split('/\,\s*/', get_option('affiliatecode_names') ) as $codename)
   {
-     if($loadwhen_param && $_REQUEST[$codename])
+     if(get_option('affiliate_load_param') && $_REQUEST[$codename])
      {
          return $_REQUEST[$codename];
      }
-     if($loadwhen_cookie && $_COOKIE[$codename])
+     if(get_option('affiliate_load_cookie') && $_COOKIE[$codename])
      {
          return $_COOKIE[$codename];
      }
