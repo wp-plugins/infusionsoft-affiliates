@@ -40,19 +40,24 @@ function infusionsoftaffiliate_print($atts, $content) {
 
 
 function activate_infusionsoftaffiliates() {
-  $legacyload = get_option('affiliate_load');
-  delete_option('affiliate_load');
-
   add_option('infusionsoft_apikey');
   add_option('infusionsoft_appname');
   add_option('affiliate_caching', '60');
-  add_option('affiliate_load_param',  !$legacyload || ($legacyload == 'param') || ($legacyload == 'request'));
+  add_option('affiliate_load_param', '1');
   add_option('affiliate_load_root', '1');
-  add_option('affiliate_load_cookie', !$legacyload || ($legacyload == 'cookie') || ($legacyload == 'request'));
+  add_option('affiliate_load_cookie', '1');
   add_option('affiliatecode_names', 'code,affcode');
   add_option('affiliate_defaultpage');
   add_option('noaffiliate_defaultpage');
   add_option('affiliates_lastsync');
+
+  # If this is from v0.4 or earlier, time to upgrade to the new option format
+  if($legacyload = get_option('affiliate_load'))
+  {
+     delete_option('affiliate_load');
+     update_option('affiliate_load_cookie', ($legacyload == 'cookie') || ($legacyload == 'request'));
+     update_option('affiliate_load_param', ($legacyload == 'param') || ($legacyload == 'request'));
+  }
 
    global $wpdb;
    $sql = "CREATE TABLE " . $wpdb->prefix . "infusionsoftaffiliates (
