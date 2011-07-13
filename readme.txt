@@ -52,9 +52,9 @@ If you need help with a custom installation or modification to better integrate 
 * 7/11/2011: Default pages are now supported for when an affiliate code is found, but no path is specified, or when an affiliate code is simply not found.
 
 = Version 0.3 =
-* 7/6/2011: Version 0.3 Added dateshift option for dates so you can move make relative dates 
-* 7/6/2011: Version 0.3 Fixed bug so you can now access settings right from the plugin listing
-* 7/6/2011: Version 0.3 Caching is now supported and deactivation no longer deletes options and data
+* 7/6/2011: Added dateshift option for dates so you can move make relative dates 
+* 7/6/2011: Fixed bug so you can now access settings right from the plugin listing
+* 7/6/2011: Caching is now supported and deactivation no longer deletes options and data
 
 = Version 0.2 =
-* 7/6/2011: Version 0.2 Added
+* 7/6/2011: Plugin Added
