@@ -43,6 +43,9 @@ If you need help with a custom installation or modification to better integrate 
 
 == Changelog ==
 
+= Version 0.6 =
+* 8/2/2011: Added support for individual page overrides on what to do when an affiliate code isn't present
+
 = Version 0.5 =
 * 7/12/2011: Help added to the options page
 * 7/12/2011: Root URL affiliate code detection mildy operational
