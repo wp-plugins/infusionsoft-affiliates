@@ -3,7 +3,7 @@ Contributors: jeremyshapiro
 Tags: affiliates, affiliate program, infusion, infusionsoft, tracking, jeremy shapiro, webinar, webinars, personalization, caching
 Requires at least: 2.0.2
 Tested up to: 3.2
-Stable tag: 0.5.1
+Stable tag: 0.6
 
 This plugin allows you to load an Infusionsoft Affiliate's information into your wordpress pages using the [affiliate] shortcode.
 

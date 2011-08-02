@@ -3,7 +3,7 @@
 Plugin Name: Infusionsoft Affiliates
 Plugin URI: http://asandia.com/wordpress-plugins/infusionsoft-affiliates/
 Description: Short Codes to insert a given Infusionsoft affiliates' info
-Version: 0.5.1
+Version: 0.6
 Author: Jeremy Shapiro
 Author URI: http://www.asandia.com/
 */
@@ -100,6 +100,8 @@ function admin_init_infusionsoftaffiliates() {
   register_setting('infusionsoftaffiliates', 'affiliatecode_names');
   register_setting('infusionsoftaffiliates', 'affiliate_defaultpage');
   register_setting('infusionsoftaffiliates', 'noaffiliate_defaultpage');
+
+  add_meta_box("infusionsoftaffiliates-page", "Infusionsoft Affiliates Page Options", "infusionsoftaffiliates_page", "page", "normal", "high");
 }
 
 function admin_menu_infusionsoftaffiliates() {
@@ -110,8 +112,55 @@ function options_page_infusionsoftaffiliates() {
   include(dirname(__FILE__).'/options.php');  
 }
 
+function infusionsoftaffiliates_page() {
+  $nadefaultpage = get_post_meta(get_the_ID(),'noaffiliate_defaultpage_override',true);
+  wp_nonce_field('ianonce','_ianonce');
+?>
+
+<p>When this page is requested and no affiliate code is found:
+
+<p><input type="radio" name="noaffiliate_defaultpage_override" value="no" <?php echo ($nadefaultpage) ? "":"checked"; ?>
+	onChange="document.getElementById('noaffiliate_defaultpage').disabled = this.checked;">
+Use the <a href="options-general.php?page=infusionsoftaffiliates">Default Setting</a> of: Show 
+
+<?php
+  if($dpageid = get_option('noaffiliate_defaultpage'))
+  {
+     $dpage = get_post($dpageid);
+     print '<a href="'.get_permalink($dpageid).'">'.$dpage->post_title.'</a>';
+  } else {
+     print "this page.";
+  }
+?>
+
+<p><input type="radio" name="noaffiliate_defaultpage_override" value="yes" <?php echo ($nadefaultpage) ? "checked":""; ?>
+	onChange="document.getElementById('noaffiliate_defaultpage').disabled = !this.checked;">
+Override the default and show:
+<?php wp_dropdown_pages(array('name' => 'noaffiliate_defaultpage', 'selected' => (($nadefaultpage) ? $nadefaultpage : get_the_ID() ))); ?>
+<script language="javascript">document.getElementById('noaffiliate_defaultpage').disabled = <?php echo(($nadefaultpage) ? 'false':'true'); ?>;</script>
+<?php
+
+}
+
+
+function infusionsoftaffiliates_updatemeta($id) {
+   $naoverride = $_POST['noaffiliate_defaultpage_override'];
+
+   # do we need to check the nonce, or is that a given?
+   if (isset($naoverride) && !empty($naoverride) && wp_verify_nonce($_REQUEST['_ianonce'], 'ianonce'))
+   {
+     if($naoverride == 'yes')
+     {
+         update_post_meta($id, 'noaffiliate_defaultpage_override', $_POST['noaffiliate_defaultpage']);
+     } else {
+         delete_post_meta($id, 'noaffiliate_defaultpage_override');
+     }
+   }
+}
+
+
 function infusionsoftaffiliates_checkrequest() {
-  global $infusionsoftaffiliate;
+  global $infusionsoftaffiliate, $post;
 
   if($code = infusionsoftaffiliates_findcode())
   {
@@ -130,18 +179,27 @@ function infusionsoftaffiliates_checkrequest() {
 		infusionsoftaffiliates_setcookie($code);
 	}
 
+  } else if($newpageid = get_post_meta($post->ID, 'noaffiliate_defaultpage_override', true)) {
+	$newurl = get_permalink($newpageid);
+	$newpath = parse_url($newurl);
+
+	if($newpath['path'] != $_SERVER['REQUEST_URI'])
+	{
+		wp_redirect($newurl);
+		exit;
+	}
+
   } else if(get_option('noaffiliate_defaultpage')) {
 	$newurl = get_permalink(get_option('noaffiliate_defaultpage'));
-	$newpath = parse_url($newurl);
-	$newpath = $newpath['path'];
 
-	if($newpath != $_SERVER['REQUEST_URI'])
+	$newpath = parse_url($newurl);
+
+	if($newpath['path'] != $_SERVER['REQUEST_URI'])
 	{
 		wp_redirect($newurl);
 		exit;
 	}
   }
-
 }
 
 
@@ -237,11 +295,14 @@ add_filter( 'plugin_action_links', 'infusionsoftaffiliates_plugin_action_links',
 register_activation_hook(__FILE__,     'activate_infusionsoftaffiliates');
 register_deactivation_hook(__FILE__, 'deactivate_infusionsoftaffiliates');
 register_uninstall_hook(__FILE__, 'uninstall_infusionsoftaffiliates');
-add_action('send_headers', 'infusionsoftaffiliates_checkrequest');
 
 if (is_admin()) {
   add_action('admin_init', 'admin_init_infusionsoftaffiliates');
   add_action('admin_menu', 'admin_menu_infusionsoftaffiliates');
+  add_action('save_post', 'infusionsoftaffiliates_updatemeta');
+} else {
+#  add_action('send_headers', 'infusionsoftaffiliates_checkrequest');
+  add_action('wp', 'infusionsoftaffiliates_checkrequest');
 }
 
 function syncaffiliates() {
