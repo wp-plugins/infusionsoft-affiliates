@@ -3,7 +3,7 @@
 Plugin Name: Infusionsoft Affiliates
 Plugin URI: http://asandia.com/wordpress-plugins/infusionsoft-affiliates/
 Description: Short Codes to insert a given Infusionsoft affiliates' info
-Version: 0.6
+Version: 0.6.1
 Author: Jeremy Shapiro
 Author URI: http://www.asandia.com/
 */
@@ -169,7 +169,7 @@ function infusionsoftaffiliates_checkrequest() {
 		$infusionsoftaffiliate = infusionsoftaffiliates_load($code);
 	}
 
-	if (($_SERVER['REQUEST_URI'] == '/') && get_option('affiliate_defaultpage'))
+	if (preg_match('/^\/(\?.*|)$/', $_SERVER['REQUEST_URI']) && get_option('affiliate_defaultpage'))
 	{
 		$newurl = get_permalink(get_option('affiliate_defaultpage'));
 		wp_redirect($newurl);
