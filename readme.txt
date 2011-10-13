@@ -2,8 +2,8 @@
 Contributors: jeremyshapiro
 Tags: affiliates, affiliate program, infusion, infusionsoft, tracking, jeremy shapiro, webinar, webinars, personalization, caching
 Requires at least: 2.0.2
-Tested up to: 3.2
-Stable tag: 0.6.1
+Tested up to: 3.2.1
+Stable tag: 1.2
 
 This plugin allows you to load an Infusionsoft Affiliate's information into your wordpress pages using the [affiliate] shortcode.
 
@@ -42,6 +42,10 @@ To configure your installation, click Settings and then select enter your Infusi
 If you need help with a custom installation or modification to better integrate into your Infusionsoft application and WordPress site, please contact Jeremy B. Shapiro directly.
 
 == Changelog ==
+
+= Version 1.2 =
+* 10/12/2011: Changed version number to a stable number since... it's stable :)
+* 10/12/2011: If an invalid code is specified and a valid code is required, the default page will now be shown. Previously, invalid codes worked
 
 = Version 0.6 =
 * 8/2/2011: Added support for individual page overrides on what to do when an affiliate code isn't present
