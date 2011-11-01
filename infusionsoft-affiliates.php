@@ -3,7 +3,7 @@
 Plugin Name: Infusionsoft Affiliates
 Plugin URI: http://asandia.com/wordpress-plugins/infusionsoft-affiliates/
 Description: Short Codes to insert a given Infusionsoft affiliates' info
-Version: 1.2
+Version: 1.4
 Author: Jeremy Shapiro
 Author URI: http://www.asandia.com/
 */
@@ -50,6 +50,7 @@ function activate_infusionsoftaffiliates() {
   add_option('affiliate_defaultpage');
   add_option('noaffiliate_defaultpage');
   add_option('affiliates_lastsync');
+  add_option('affiliates_lastsync_start');
 
   # If this is from v0.4 or earlier, time to upgrade to the new option format
   if($legacyload = get_option('affiliate_load'))
@@ -85,6 +86,7 @@ function uninstall_infusionsoftaffiliates() {
   delete_option('affiliate_defaultpage');
   delete_option('noaffiliate_defaultpage');
   delete_option('affiliates_lastsync');
+  delete_option('affiliates_lastsync_start');
 
    global $wpdb;
    $wpdb->query("DROP TABLE ".$wpdb->prefix . "infusionsoftaffiliates;");
@@ -273,7 +275,11 @@ function infusionsoftaffiliates_load($code)
 			(time() - get_option('affiliates_lastsync')) > (60 * $caching)
 		)))
 	{
-		syncaffiliates();
+		# Check if we just started syncing on another thread
+		if((time() - get_option('affiliates_lastsync_start')) > 20)
+		{
+			syncaffiliates();
+  		}
 	}
 	global $wpdb;
 	$sql = "SELECT * FROM ".$wpdb->prefix."infusionsoftaffiliates WHERE affcode = '".mysql_real_escape_string($code)."';";
@@ -306,6 +312,8 @@ if (is_admin()) {
 function syncaffiliates() {
   global $infusion;
   if (!infusion_connect()) { return; }
+
+   update_option('affiliates_lastsync_start', time());
 
    $fieldtypes = array('int NOT NULL', 'varchar(256)', 'varchar(50)', 'varchar(50)');
    $afffields = array('Id', 'AffName', 'AffCode', 'Password');
@@ -348,8 +356,19 @@ function syncaffiliates() {
 	}
    }
 
-   $affs = $infusion->dsFind('Affiliate', 1000, 0, 'Id', '%', $afffields);
- 
+   $affs = array();
+   $page = 0;
+
+   do
+   {
+	$newaffs = $infusion->dsFind('Affiliate', 1000, $page, 'Id', '%', $afffields);
+	if(count($newaffs))
+	{
+		$affs = array_merge($affs, $newaffs);
+	}
+	$page++;
+   } while(count($newaffs));
+
    global $wpdb;
 
    $wpdb->query("DROP TABLE ".$wpdb->prefix . "infusionsoftaffiliates;");
@@ -384,6 +403,7 @@ function syncaffiliates() {
    }
 
    update_option('affiliates_lastsync', time());
+   update_option('affiliates_lastsync_start', 0);
 
 }
 
