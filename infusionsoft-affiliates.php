@@ -3,14 +3,14 @@
 Plugin Name: Infusionsoft Affiliates
 Plugin URI: http://asandia.com/wordpress-plugins/infusionsoft-affiliates/
 Description: Short Codes to insert a given Infusionsoft affiliates' info
-Version: 1.5
+Version: 1.7
 Author: Jeremy Shapiro
 Author URI: http://www.asandia.com/
 */
 
 /*
 Infusionsoft Affiliates (Wordpress Plugin)
-Copyright (C) 2011 Jeremy Shapiro
+Copyright (C) 2011-2012 Jeremy Shapiro
 */
 
 //tell wordpress to register the shortcode
@@ -87,6 +87,7 @@ function uninstall_infusionsoftaffiliates() {
   delete_option('noaffiliate_defaultpage');
   delete_option('affiliates_lastsync');
   delete_option('affiliates_lastsync_start');
+  delete_option('infusionsoftaffiliates_registered');
 
    global $wpdb;
    $wpdb->query("DROP TABLE ".$wpdb->prefix . "infusionsoftaffiliates;");
@@ -113,6 +114,29 @@ function admin_menu_infusionsoftaffiliates() {
 function options_page_infusionsoftaffiliates() {
   include(dirname(__FILE__).'/options.php');  
 }
+
+
+function infusionsoftaffiliates_ajaxreg() {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, 'https://asandia.infusionsoft.com/app/form/process/beef1ec44c35dfa93fc12e976ce91103');
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $_POST);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $result = curl_exec($ch);
+        if (preg_match('/app\/form\/success\//', $result)) {
+                echo "Success";
+                update_option('infusionsoftaffiliates_registered', md5($_POST['inf_field_Website']));
+        } else {
+                echo "Error!";
+        }
+        die(); // this is required to return a proper result
+}
+                 
+         
+function infusionsoftaffiliates_isregistered() {
+        return (md5(get_bloginfo('url')) == get_option('infusionsoftaffiliates_registered'));
+}
+  
 
 function infusionsoftaffiliates_page() {
   $nadefaultpage = get_post_meta(get_the_ID(),'noaffiliate_defaultpage_override',true);
@@ -171,7 +195,7 @@ function infusionsoftaffiliates_checkrequest() {
 	if (preg_match('/^\/(\?.*|)$/', $_SERVER['REQUEST_URI']) && get_option('affiliate_defaultpage'))
 	{
 		$newurl = get_permalink(get_option('affiliate_defaultpage'));
-		wp_redirect($newurl);
+		wp_redirect($newurl, 303);
 		infusionsoftaffiliates_setcookie($code);
 		exit;
 	} else {
@@ -180,11 +204,10 @@ function infusionsoftaffiliates_checkrequest() {
 
   } else if($newpageid = get_post_meta($post->ID, 'noaffiliate_defaultpage_override', true)) {
 	$newurl = get_permalink($newpageid);
-	$newpath = parse_url($newurl);
 
-	if($newpath['path'] != $_SERVER['REQUEST_URI'])
+	if($newpageid != $post->ID)
 	{
-		wp_redirect($newurl);
+		wp_redirect($newurl, 303);
 		exit;
 	}
 
@@ -195,7 +218,7 @@ function infusionsoftaffiliates_checkrequest() {
 
 	if($newpath['path'] != $_SERVER['REQUEST_URI'])
 	{
-		wp_redirect($newurl);
+		wp_redirect($newurl, 303);
 		exit;
 	}
   }
@@ -293,6 +316,9 @@ function infusionsoftaffiliates_load($code)
 function infusionsoftaffiliates_plugin_action_links( $links, $file ) {
 	if ( $file == plugin_basename( dirname(__FILE__).'/infusionsoft-affiliates.php' ) ) {
 		$links[] = '<a href="options-general.php?page=infusionsoftaffiliates">'.__('Settings').'</a>';
+                if(!infusionsoftaffiliates_isregistered()) {
+                        $links[] = '<a href="options-general.php?page=infusionsoftaffiliates#register">'.__('Register').'</a>';
+                }
 	}
 
 	return $links;
@@ -308,6 +334,7 @@ if (is_admin()) {
   add_action('admin_init', 'admin_init_infusionsoftaffiliates');
   add_action('admin_menu', 'admin_menu_infusionsoftaffiliates');
   add_action('save_post', 'infusionsoftaffiliates_updatemeta');
+  add_action('wp_ajax_infusionsoftaffiliates_reg', 'infusionsoftaffiliates_ajaxreg');
 } else {
 #  add_action('send_headers', 'infusionsoftaffiliates_checkrequest');
   add_action('wp', 'infusionsoftaffiliates_checkrequest');

@@ -1,3 +1,15 @@
+<script type="text/javascript">
+function iaregister_reg() {
+        jQuery.post(ajaxurl, jQuery('#regform').serialize(), function(response) {
+                if(response == 'Success')
+                {
+                        jQuery('#regbox').html('Thanks! Registration was successful!');
+                } else {
+                        alert("Oh, no! We weren't able to complete your registration. :(");
+                }
+        });
+};
+</script>
 <div class="wrap">
 <div id="icon-plugins" class="icon32"></div>
 <h2>Infusionsoft Affiliates</h2>
@@ -74,7 +86,46 @@ Select which page will be shown when there is a valid affiliate, but no page spe
 
 <p class="submit">
 <input type="submit" class="button-primary" value="<?php _e('Save Changes') ?>" />
+</form>
+
 </p>
+
+
+
+<a name="register"></a>
+<?php if(infusionsoftaffiliates_isregistered()) { ?>
+<h3>"Thank you for registering your plugin! You're a rock star!" - Jeremy Shapiro</h3>
+<?php
+  } else {
+        global $current_user;
+        get_currentuserinfo();
+?>
+<div id="regbox" class="updated">
+<p>
+<strong>Please register your copy of this awesome Infusionsoft Affiliates Plugin!</strong> Your registration helps keep Jeremy motivated and let's him know how widespread the use of this plugin is.
+He'll keep you up to date on plugin changes and might even email you some cool non-spammy goodies from time to time. Your email will be kept super safe and won't be shared,
+swapped or given away.
+<p>
+<form accept-charset="UTF-8" id="regform"
+        action="javascript:iaregister_reg();"
+        name="Wordpress Infusionsoft-Affiliates Registration" style="height:100%; margin:0" target=""
+        onsubmit="iaregister_reg(); return false;">
+<input name="action" type="hidden" value="infusionsoftaffiliates_reg">
+<input name="inf_form_xid" type="hidden" value="beef1ec44c35dfa93fc12e976ce91103" />
+<input name="inf_form_name" type="hidden" value="Wordpress Infusionsoft-Affiliates Registration" />
+<input name="infusionsoft_version" type="hidden" value="1.24.1.81" />
+<label for="inf_field_FirstName">First Name: </label>
+<input class="infusion-field-input" id="inf_field_FirstName" name="inf_field_FirstName" type="text" value="<?php
+        global $current_user; echo((isset($current_user->user_firstname) && $current_user->user_firstname) ?
+        $current_user->user_firstname : $current_user->display_name);
+        ?>" />
+<label for="inf_field_Email">Email: </label>
+<input class="infusion-field-input" id="inf_field_Email" name="inf_field_Email" type="text" value="<?php echo(get_bloginfo('admin_email')); ?>" />
+<input id="inf_field_Website" name="inf_field_Website" type="hidden" value="<?php echo(get_bloginfo('url')); ?>" />
+<input type="submit" value="Register!" class="button-primary" />
+</form>
+</div>
+<?php } ?>
 
 <p>
 <h2>Frequently Asked Questions</h2>
@@ -114,5 +165,4 @@ Sure. Contact Jeremy B. Shapiro to discuss options.
 
 </ol>
 
-</form>
 </div>
