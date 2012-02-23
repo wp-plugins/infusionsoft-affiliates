@@ -3,7 +3,7 @@
 Plugin Name: Infusionsoft Affiliates
 Plugin URI: http://asandia.com/wordpress-plugins/infusionsoft-affiliates/
 Description: Short Codes to insert a given Infusionsoft affiliates' info
-Version: 1.7
+Version: 1.8
 Author: Jeremy Shapiro
 Author URI: http://www.asandia.com/
 */
@@ -23,6 +23,7 @@ function infusionsoftaffiliate_print($atts, $content) {
 	'field'		=> '',
 	'format'	=> '',
 	'dateshift'	=> '',
+	'htmldecode'	=> false,
         'default'        => ''
         ), $atts);
 
@@ -35,7 +36,12 @@ function infusionsoftaffiliate_print($atts, $content) {
     $val = date($atts['format'], strtotime($val));
   }
 
-  return $val;
+  if($atts['htmldecode'])
+  {
+	return htmlspecialchars_decode($val);
+  } else {
+	return $val;
+  }
 }
 
 

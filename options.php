@@ -160,8 +160,11 @@ like <code>[affiliate field="_WebinerDate" dateshift="-3 days" /]</code>.
 Yes! Just remember to use the field names as Infusionsoft knows them in the API, i.e. put an underscore before the name. See your custom fields
 in your Infusionsoft application for exactly how they should be written.
 
+<li><b>I'm returning HTML and WordPress keeps encoding it. How do I keep the raw HTML?</b><br/>
+Just specify <code>htmldecode=1</code> to decode the HTML. This is useful if you're returning raw HTML that you want to use and not have escaped.
+
 <li><b>Can you just build me a custom Affiliate Resource Center?</b><br/>
-Sure. Contact Jeremy B. Shapiro to discuss options.
+Sure. <a href="http://asandia.com/" target="_blank">Contact Jeremy B. Shapiro</a> to discuss options.
 
 </ol>
 

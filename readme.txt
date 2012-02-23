@@ -3,7 +3,7 @@ Contributors: jeremyshapiro
 Tags: affiliates, affiliate program, infusion, infusionsoft, tracking, jeremy shapiro, webinar, webinars, personalization, caching
 Requires at least: 2.0.2
 Tested up to: 3.2.1
-Stable tag: 1.7
+Stable tag: 1.8
 
 This plugin allows you to load an Infusionsoft Affiliate's information into your wordpress pages using the [affiliate] shortcode.
 
@@ -27,6 +27,8 @@ Additionally, for date fields, you can move a date forward or backwards in time 
 
 When using `dateshift`, the value should start with a `+` or a `-` followed by a number and then a unit, for example `- 1 day`, `+90 minutes`, or `+1 year`.
 
+If you are returning any HTML code, for example a tracking pixel, an image tag, rich HTML, etc... you may want to specify `htmldecode=1` to prevent wordpres from escaping your HTML.
+
 All your custom affiliate fields get pulled down, too, just don't forget to put the underscore in front, i.e. _YourCustomField.
 
 == Installation ==
@@ -42,6 +44,9 @@ To configure your installation, click Settings and then select enter your Infusi
 If you need help with a custom installation or modification to better integrate into your Infusionsoft application and WordPress site, please contact Jeremy B. Shapiro directly.
 
 == Changelog ==
+
+= Version 1.8 =
+* 2/22/2012: Added support for htmldecode to prevent WordPress from escaping HTML when you actually want HTML.
 
 = Version 1.7 =
 * 1/28/2012: Added support for registering the plugin. Made redirects temporary redirects. Pages that do not redirect now don't redirect to themselves losing query paramters.
