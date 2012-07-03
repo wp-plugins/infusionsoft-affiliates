@@ -3,7 +3,7 @@
 Plugin Name: Infusionsoft Affiliates
 Plugin URI: http://asandia.com/wordpress-plugins/infusionsoft-affiliates/
 Description: Short Codes to insert a given Infusionsoft affiliates' info
-Version: 1.81
+Version: 1.9
 Author: Jeremy Shapiro
 Author URI: http://www.asandia.com/
 */
@@ -146,12 +146,17 @@ function infusionsoftaffiliates_isregistered() {
 
 function infusionsoftaffiliates_page() {
   $nadefaultpage = get_post_meta(get_the_ID(),'noaffiliate_defaultpage_override',true);
+  $nodefaultpage = get_post_meta(get_the_ID(),'noaffiliate_disable',true);
   wp_nonce_field('ianonce','_ianonce');
 ?>
 
-<p>When this page is requested and no affiliate code is found:
+<p>When this page is requested and no affiliate code is found:</p>
 
-<p><input type="radio" name="noaffiliate_defaultpage_override" value="no" <?php echo ($nadefaultpage) ? "":"checked"; ?>
+<p><input type="radio" name="noaffiliate_defaultpage_override" value="disable" <?php echo ($nodefaultpage) ? "checked":""; ?>
+    onChange="document.getElementById('noaffiliate_defaultpage').disabled = this.checked;">
+    Show this page anyway
+
+<p><input type="radio" name="noaffiliate_defaultpage_override" value="no" <?php echo (!$nodefaultpage && !$nadefaultpage) ? "checked":""; ?>
 	onChange="document.getElementById('noaffiliate_defaultpage').disabled = this.checked;">
 Use the <a href="options-general.php?page=infusionsoftaffiliates">Default Setting</a> of: Show 
 
@@ -165,7 +170,7 @@ Use the <a href="options-general.php?page=infusionsoftaffiliates">Default Settin
   }
 ?>
 
-<p><input type="radio" name="noaffiliate_defaultpage_override" value="yes" <?php echo ($nadefaultpage) ? "checked":""; ?>
+<p><input type="radio" name="noaffiliate_defaultpage_override" value="yes" <?php echo (!$nodefaultpage && $nadefaultpage) ? "checked":""; ?>
 	onChange="document.getElementById('noaffiliate_defaultpage').disabled = !this.checked;">
 Override the default and show:
 <?php wp_dropdown_pages(array('name' => 'noaffiliate_defaultpage', 'selected' => (($nadefaultpage) ? $nadefaultpage : get_the_ID() ))); ?>
@@ -184,8 +189,13 @@ function infusionsoftaffiliates_updatemeta($id) {
      if($naoverride == 'yes')
      {
          update_post_meta($id, 'noaffiliate_defaultpage_override', $_POST['noaffiliate_defaultpage']);
+         delete_post_meta($id, 'noaffiliate_disable');
+     } elseif($naoverride == 'disable') {
+         delete_post_meta($id, 'noaffiliate_defaultpage_override');
+         update_post_meta($id, 'noaffiliate_disable', true);
      } else {
          delete_post_meta($id, 'noaffiliate_defaultpage_override');
+         delete_post_meta($id, 'noaffiliate_disable');
      }
    }
 }
@@ -193,6 +203,12 @@ function infusionsoftaffiliates_updatemeta($id) {
 
 function infusionsoftaffiliates_checkrequest() {
   global $infusionsoftaffiliate, $post;
+
+  # if the plugin is disabled for this page, continue as normal
+  if(get_post_meta($post->ID, 'noaffiliate_disable', true))
+  {
+      return true;
+  }
 
   # if we a) found a code and b) we already loaded the code OR c) we are now able to load the code...
   if(($code = infusionsoftaffiliates_findcode()) && ($infusionsoftaffiliate || ($infusionsoftaffiliate = infusionsoftaffiliates_load($code))))
