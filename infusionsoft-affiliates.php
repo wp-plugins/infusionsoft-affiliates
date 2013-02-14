@@ -3,14 +3,14 @@
 Plugin Name: Infusionsoft Affiliates
 Plugin URI: http://asandia.com/wordpress-plugins/infusionsoft-affiliates/
 Description: Short Codes to insert a given Infusionsoft affiliates' info
-Version: 2.0.2
+Version: 2.1
 Author: Jeremy Shapiro
 Author URI: http://www.asandia.com/
 */
 
 /*
 Infusionsoft Affiliates (Wordpress Plugin)
-Copyright (C) 2011-2012 Jeremy Shapiro
+Copyright (C) 2011-2013 Jeremy Shapiro
 */
 
 //tell wordpress to register the shortcode
@@ -57,6 +57,7 @@ function activate_infusionsoftaffiliates() {
   add_option('noaffiliate_defaultpage');
   add_option('affiliates_lastsync');
   add_option('affiliates_lastsync_start');
+  add_option('affiliates_manualsync');
 
   # If this is from v0.4 or earlier, time to upgrade to the new option format
   if($legacyload = get_option('affiliate_load'))
@@ -93,6 +94,7 @@ function uninstall_infusionsoftaffiliates() {
   delete_option('noaffiliate_defaultpage');
   delete_option('affiliates_lastsync');
   delete_option('affiliates_lastsync_start');
+  delete_option('affiliates_manualsync');
   delete_option('infusionsoftaffiliates_registered');
 
    global $wpdb;
@@ -109,6 +111,7 @@ function admin_init_infusionsoftaffiliates() {
   register_setting('infusionsoftaffiliates', 'affiliatecode_names');
   register_setting('infusionsoftaffiliates', 'affiliate_defaultpage');
   register_setting('infusionsoftaffiliates', 'noaffiliate_defaultpage');
+  register_setting('infusionsoftaffiliates', 'affiliates_manualsync');
 
   add_meta_box("infusionsoftaffiliates-page", "Infusionsoft Affiliates Page Options", "infusionsoftaffiliates_page", "page", "normal", "high");
 }
@@ -203,6 +206,16 @@ function infusionsoftaffiliates_updatemeta($id) {
 
 function infusionsoftaffiliates_checkrequest() {
   global $infusionsoftaffiliate, $post;
+
+    if(array_key_exists('affiliatesync', $_REQUEST))
+    {
+        # If manual sync is enabled and syncaffiliates is the last 6 of the API key, then sync away!
+        if(get_option('affiliates_manualsync')
+            and ($_REQUEST['affiliatesync'] == substr(get_option('infusionsoft_apikey'),-6,6)))
+        {
+            syncaffiliates();
+        }
+    }
 
   # if the plugin is disabled for this page, continue as normal
   if(get_post_meta($post->ID, 'noaffiliate_disable', true))
@@ -327,11 +340,7 @@ function infusionsoftaffiliates_load($code)
 			(time() - get_option('affiliates_lastsync')) > (60 * $caching)
 		)))
 	{
-		# Check if we just started syncing on another thread
-		if((time() - get_option('affiliates_lastsync_start')) > 20)
-		{
-			syncaffiliates();
-  		}
+        syncaffiliates();
 	}
 	global $wpdb;
 	$sql = "SELECT * FROM ".$wpdb->prefix."infusionsoftaffiliates WHERE affcode = '".mysql_real_escape_string($code)."';";
@@ -365,9 +374,19 @@ if (is_admin()) {
   add_action('wp', 'infusionsoftaffiliates_checkrequest');
 }
 
-function syncaffiliates() {
-  global $infusion;
-  if (!infusion_connect()) { return; }
+function syncaffiliates()
+{
+    # Check if we just started syncing on another thread...
+    if((time() - get_option('affiliates_lastsync_start')) <= 20)
+    {
+        return false;
+    }
+
+    global $infusion;
+    if (!infusion_connect()) { return false; }
+
+    # Don't allow aborted connections to cancel our update mid-way through
+    ignore_user_abort(true);
 
    update_option('affiliates_lastsync_start', time());
 
@@ -415,15 +434,21 @@ function syncaffiliates() {
    $affs = array();
    $page = 0;
 
-   do
-   {
-	$newaffs = $infusion->dsFind('Affiliate', 1000, $page, 'Id', '%', $afffields);
-	if(count($newaffs))
-	{
-		$affs = array_merge($affs, $newaffs);
-	}
-	$page++;
-   } while(count($newaffs));
+    do
+    {
+        $newaffs = $infusion->dsFind('Affiliate', 1000, $page, 'Id', '%', $afffields);
+        if(count($newaffs))
+        {
+            $affs = array_merge($affs, $newaffs);
+        }
+        $page++;
+    } while(count($newaffs));
+
+    # If for some reason we didn't get any affiliates, bail!
+    if(!count($affs))
+    {
+        return false;
+    }
 
    global $wpdb;
 
@@ -440,27 +465,29 @@ function syncaffiliates() {
    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
    dbDelta($sql);
 
-   foreach($affs as $aff)
-   {
-      $i = 0;
-      foreach ($afffields as $key)
-      {
-	if($aff[$key])
-	{
-		if($fieldtypes[$i] == 'datetime') {
-			$aff[$key] = date('Y-m-d H:i:s', strtotime($aff[$key]));
-		} else if($fieldtypes[$i] == 'date') {
-			$aff[$key] = date('Y-m-d', strtotime($aff[$key]));
-		}
-	}
-	$i++;
-      }
-      $wpdb->insert($wpdb->prefix . "infusionsoftaffiliates", array_change_key_case($aff));
-   }
+    # ToDo: It's possible that we die in the middle of this update . . .
+    foreach($affs as $aff)
+    {
+        $i = 0;
+        foreach ($afffields as $key)
+        {
+            if($aff[$key])
+            {
+                if($fieldtypes[$i] == 'datetime') {
+                    $aff[$key] = date('Y-m-d H:i:s', strtotime($aff[$key]));
+                } else if($fieldtypes[$i] == 'date') {
+                    $aff[$key] = date('Y-m-d', strtotime($aff[$key]));
+                }
+            }
+            $i++;
+        }
+        $wpdb->insert($wpdb->prefix . "infusionsoftaffiliates", array_change_key_case($aff));
+    }
 
    update_option('affiliates_lastsync', time());
    update_option('affiliates_lastsync_start', 0);
 
+    return true;
 }
 
 function infusion_connect() {
@@ -468,7 +495,7 @@ function infusion_connect() {
 
   if ($infusion) { return true; }
 
-  include_once dirname( __FILE__ ) . '/isdk.php';
+  include_once plugin_dir_path( __FILE__ ) . 'isdk.php';
   $infusion = new iSDK(get_option('infusionsoft_appname'), 'infusion', get_option('infusionsoft_apikey'));
 
   if(!$infusion->errorCode && $aff = $infusion->dsFind('Affiliate', 1, 0, 'Id', '%', array('Id')))

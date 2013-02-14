@@ -44,8 +44,23 @@ Please enter your Infusionsoft API Key below so that we can access affiliates fr
     <option value="60"  <?php if (get_option('affiliate_caching') == '60') echo "selected=selected" ?> >Cache at most Hourly</option>
     <option value="1440"  <?php if (get_option('affiliate_caching') == '1440') echo "selected=selected" ?> >Cache at most Daily</option>
   </select>
-  &nbsp; <?php echo( (get_option('affiliates_lastsync') != '') ? "Last synced ".human_time_diff(get_option('affiliates_lastsync'))." ago" : "Not yet synched"); ?>
+  &nbsp; <?php
+    echo( (get_option('affiliates_lastsync') != '') ? (
+    get_option('affiliates_lastsync_start') ?
+        'Syncing Now...' :
+        "Last synced ".human_time_diff(get_option('affiliates_lastsync'))." ago") :
+        "Not yet synched");
+    ?>
 </td>
+</tr>
+
+<tr valign="top">
+    <th scope="row">Manual Syncing:</th>
+    <td>
+        <input type="checkbox" name="affiliates_manualsync" value="1" <?php checked(get_option('affiliates_manualsync'));  ?>>
+        Allow manual sycning<?php if(get_option('infusionsoft_apikey')) { ?> by pinging this URL:<br/>
+        <code><?php $pingurl = site_url().'?affiliatesync='.substr(get_option('infusionsoft_apikey'),-6,6); echo("<a href=\"$pingurl\" target=\"_blank\">$pingurl</a>") ?></code><?php } ?>
+    </td>
 </tr>
 
 <tr valign="top">

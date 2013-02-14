@@ -3,9 +3,16 @@
 #########        Object Oriented PHP SDK for Infusionsoft        #########
 #########           Created by Justin Morris on 09-10-08         #########
 #########           Updated by Justin Gourley on 06-27-11        #########
+#########           Updated by Jeremy Shapiro on 02-14-13        #########
 ##########################################################################
 
-include("xmlrpc.inc");
+# If we've already loaded xmlrpc, don't do it again or we'll get errors!
+# This only really happens when you have multiple plugins all using xmlrpc,
+# like multiple Infusionsoft related plugins, for example...
+if(!array_key_exists('xmlrpcVersion', $GLOBALS))
+{
+    include_once plugin_dir_path( __FILE__ )."xmlrpc.inc";
+}
 
 class iSDK {
 
