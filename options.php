@@ -44,11 +44,13 @@ Please enter your Infusionsoft API Key below so that we can access affiliates fr
     <option value="60"  <?php if (get_option('affiliate_caching') == '60') echo "selected=selected" ?> >Cache at most Hourly</option>
     <option value="1440"  <?php if (get_option('affiliate_caching') == '1440') echo "selected=selected" ?> >Cache at most Daily</option>
   </select>
-  &nbsp; <?php
+  &nbsp; <?php global $wpdb;
     echo( (get_option('affiliates_lastsync') != '') ? (
     get_option('affiliates_lastsync_start') ?
         'Syncing Now...' :
-        "Last synced ".human_time_diff(get_option('affiliates_lastsync'))." ago") :
+        ("Last synced ".
+            number_format($wpdb->get_var("SELECT COUNT(Id) FROM ".$wpdb->prefix."infusionsoftaffiliates")).
+            " affiliates ".human_time_diff(get_option('affiliates_lastsync'))." ago")) :
         "Not yet synched");
     ?>
 </td>

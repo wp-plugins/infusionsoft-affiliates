@@ -3,7 +3,7 @@
 Plugin Name: Infusionsoft Affiliates
 Plugin URI: http://asandia.com/wordpress-plugins/infusionsoft-affiliates/
 Description: Short Codes to insert a given Infusionsoft affiliates' info
-Version: 2.1
+Version: 2.2
 Author: Jeremy Shapiro
 Author URI: http://www.asandia.com/
 */
@@ -226,13 +226,20 @@ function infusionsoftaffiliates_checkrequest() {
   # if we a) found a code and b) we already loaded the code OR c) we are now able to load the code...
   if(($code = infusionsoftaffiliates_findcode()) && ($infusionsoftaffiliate || ($infusionsoftaffiliate = infusionsoftaffiliates_load($code))))
   {
+      $blogurlparts = parse_url(get_bloginfo('wpurl'));
+
 	# If we have a valid code, are on the root page, and there's a default page for folks with affiliate codes, redirect!
-	if (preg_match('/^\/(\?.*|)$/', $_SERVER['REQUEST_URI']) && get_option('affiliate_defaultpage'))
+	if (preg_match('/^'.preg_quote($blogurlparts['path'],'/').'\/(\?.*|)$/', $_SERVER['REQUEST_URI']) && get_option('affiliate_defaultpage'))
 	{
 		$newurl = get_permalink(get_option('affiliate_defaultpage'));
-		wp_redirect($newurl, 303);
-		infusionsoftaffiliates_setcookie($code);
-		exit;
+        if(get_option('affiliate_load_cookie'))
+        {
+            wp_redirect($newurl, 303);
+            infusionsoftaffiliates_setcookie($code);
+        } else {
+            wp_redirect($newurl.'?'.infusionsoftaffiliates_defaultcodename().'='.$code, 303);
+        }
+        exit;
 	} else {
 		infusionsoftaffiliates_setcookie($code);
 	}
@@ -293,8 +300,13 @@ function infusionsoftaffiliates_findcode()
   # by creating affiliate codes that match existing pages.
   if(!$post && get_option('affiliate_load_root'))
   {
-	$urlparts = explode('/', $_SERVER['REQUEST_URI']);
-	array_shift($urlparts);
+    $urlparts = explode('/', $_SERVER['REQUEST_URI']);
+    $blogurlparts = parse_url(get_bloginfo('wpurl'));
+    foreach(explode('/', $blogurlparts['path']) as $part)
+    {
+        array_shift($urlparts);
+    }
+
 	if($root = array_shift($urlparts))
 	{
         # Strip off the query string if it exists on the root, i.e. /affiliatecode?sometrackingcode
