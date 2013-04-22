@@ -3,7 +3,7 @@
 Plugin Name: Infusionsoft Affiliates
 Plugin URI: http://asandia.com/wordpress-plugins/infusionsoft-affiliates/
 Description: Short Codes to insert a given Infusionsoft affiliates' info
-Version: 2.2
+Version: 2.3
 Author: Jeremy Shapiro
 Author URI: http://www.asandia.com/
 */
@@ -205,7 +205,7 @@ function infusionsoftaffiliates_updatemeta($id) {
 
 
 function infusionsoftaffiliates_checkrequest() {
-  global $infusionsoftaffiliate, $post;
+    global $infusionsoftaffiliate, $post;
 
     if(array_key_exists('affiliatesync', $_REQUEST))
     {
@@ -214,56 +214,65 @@ function infusionsoftaffiliates_checkrequest() {
             and ($_REQUEST['affiliatesync'] == substr(get_option('infusionsoft_apikey'),-6,6)))
         {
             syncaffiliates();
+            global $wpdb;
+
+            print "Synced ".
+                number_format($wpdb->get_var("SELECT COUNT(Id) FROM ".$wpdb->prefix."infusionsoftaffiliates")).
+                " affiliates!";
+            exit;
         }
     }
 
-  # if the plugin is disabled for this page, continue as normal
-  if(get_post_meta($post->ID, 'noaffiliate_disable', true))
-  {
-      return true;
-  }
+    # if the plugin is disabled for this page, continue as normal
+    if(get_post_meta($post->ID, 'noaffiliate_disable', true))
+    {
+        return true;
+    }
 
-  # if we a) found a code and b) we already loaded the code OR c) we are now able to load the code...
-  if(($code = infusionsoftaffiliates_findcode()) && ($infusionsoftaffiliate || ($infusionsoftaffiliate = infusionsoftaffiliates_load($code))))
-  {
-      $blogurlparts = parse_url(get_bloginfo('wpurl'));
+    # if we a) found a code and b) we already loaded the code OR c) we are now able to load the code...
+    if(($code = infusionsoftaffiliates_findcode()) && ($infusionsoftaffiliate || ($infusionsoftaffiliate = infusionsoftaffiliates_load($code))))
+    {
+        $blogurlparts = parse_url(get_bloginfo('wpurl'));
 
-	# If we have a valid code, are on the root page, and there's a default page for folks with affiliate codes, redirect!
-	if (preg_match('/^'.preg_quote($blogurlparts['path'],'/').'\/(\?.*|)$/', $_SERVER['REQUEST_URI']) && get_option('affiliate_defaultpage'))
-	{
-		$newurl = get_permalink(get_option('affiliate_defaultpage'));
-        if(get_option('affiliate_load_cookie'))
+        # If we have a valid code, are on the root page, and there's a default page for folks with affiliate codes,
+        # and that page is not the page we're on, redirect!
+        if (preg_match('/^'.preg_quote($blogurlparts['path'],'/').'\/(\?.*|)$/', $_SERVER['REQUEST_URI'])
+            && get_option('affiliate_defaultpage')
+            && ($post->ID != get_option('affiliate_defaultpage')))
+        {
+            $newurl = get_permalink(get_option('affiliate_defaultpage'));
+            if(get_option('affiliate_load_cookie'))
+            {
+                wp_redirect($newurl, 303);
+                infusionsoftaffiliates_setcookie($code);
+            } else {
+                wp_redirect($newurl.'?'.infusionsoftaffiliates_defaultcodename().'='.$code, 303);
+            }
+            exit;
+        } else {
+            infusionsoftaffiliates_setcookie($code);
+        }
+
+    } else if($newpageid = get_post_meta($post->ID, 'noaffiliate_defaultpage_override', true)) {
+        $newurl = get_permalink($newpageid);
+
+        if($newpageid != $post->ID)
         {
             wp_redirect($newurl, 303);
-            infusionsoftaffiliates_setcookie($code);
-        } else {
-            wp_redirect($newurl.'?'.infusionsoftaffiliates_defaultcodename().'='.$code, 303);
+            exit;
         }
-        exit;
-	} else {
-		infusionsoftaffiliates_setcookie($code);
-	}
 
-  } else if($newpageid = get_post_meta($post->ID, 'noaffiliate_defaultpage_override', true)) {
-	$newurl = get_permalink($newpageid);
+    } else if(get_option('noaffiliate_defaultpage')) {
+        $newurl = get_permalink(get_option('noaffiliate_defaultpage'));
 
-	if($newpageid != $post->ID)
-	{
-		wp_redirect($newurl, 303);
-		exit;
-	}
+        $newpath = parse_url($newurl);
 
-  } else if(get_option('noaffiliate_defaultpage')) {
-	$newurl = get_permalink(get_option('noaffiliate_defaultpage'));
-
-	$newpath = parse_url($newurl);
-
-	if($newpath['path'] != $_SERVER['REQUEST_URI'])
-	{
-		wp_redirect($newurl, 303);
-		exit;
-	}
-  }
+        if($newpath['path'] != $_SERVER['REQUEST_URI'])
+        {
+            wp_redirect($newurl, 303);
+            exit;
+        }
+    }
 }
 
 

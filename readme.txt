@@ -4,7 +4,7 @@ Tags: affiliates, affiliate program, infusion, infusionsoft, tracking, jeremy sh
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=6FEVZ7NU86DNN
 Requires at least: 2.0.2
 Tested up to: 3.5
-Stable tag: 2.2
+Stable tag: 2.3
 
 This plugin allows you to load an Infusionsoft Affiliate's information into your wordpress pages using the [affiliate] shortcode.
 
@@ -45,6 +45,10 @@ To configure your installation, click Settings and then select enter your Infusi
 If you need help with a custom installation or modification to better integrate into your Infusionsoft application and WordPress site, please contact Jeremy B. Shapiro directly.
 
 == Changelog ==
+
+= Version 2.3 =
+* 4/22/2013: When manually syncing affiliates, output the number of affiliates synced and exit (previously processed the page as usual which was confusing)
+* 4/22/2013: Fixed a bug where if you were on the root page and not using cookies, the page might infinitely redirect back to itself.
 
 = Version 2.2 =
 * 4/19/2013: Show the number of affiliates last synced on the options page
