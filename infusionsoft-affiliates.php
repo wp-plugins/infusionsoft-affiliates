@@ -3,7 +3,7 @@
 Plugin Name: Infusionsoft Affiliates
 Plugin URI: http://asandia.com/wordpress-plugins/infusionsoft-affiliates/
 Description: Short Codes to insert a given Infusionsoft affiliates' info
-Version: 2.3
+Version: 2.4
 Author: Jeremy Shapiro
 Author URI: http://www.asandia.com/
 */
@@ -52,6 +52,8 @@ function activate_infusionsoftaffiliates() {
   add_option('affiliate_load_param', '1');
   add_option('affiliate_load_root', '1');
   add_option('affiliate_load_cookie', '1');
+  add_option('affiliate_root_redirect');
+  add_option('affiliate_infusionsoft_redirect');
   add_option('affiliatecode_names', 'code,affcode');
   add_option('affiliate_defaultpage');
   add_option('noaffiliate_defaultpage');
@@ -89,6 +91,8 @@ function uninstall_infusionsoftaffiliates() {
   delete_option('affiliate_load_param');
   delete_option('affiliate_load_root');
   delete_option('affiliate_load_cookie');
+  delete_option('affiliate_root_redirect');
+  delete_option('affiliate_infusionsoft_redirect');
   delete_option('affiliatecode_names');
   delete_option('affiliate_defaultpage');
   delete_option('noaffiliate_defaultpage');
@@ -108,6 +112,8 @@ function admin_init_infusionsoftaffiliates() {
   register_setting('infusionsoftaffiliates', 'affiliate_load_param');
   register_setting('infusionsoftaffiliates', 'affiliate_load_root');
   register_setting('infusionsoftaffiliates', 'affiliate_load_cookie');
+  register_setting('infusionsoftaffiliates', 'affiliate_root_redirect');
+  register_setting('infusionsoftaffiliates', 'affiliate_infusionsoft_redirect');
   register_setting('infusionsoftaffiliates', 'affiliatecode_names');
   register_setting('infusionsoftaffiliates', 'affiliate_defaultpage');
   register_setting('infusionsoftaffiliates', 'noaffiliate_defaultpage');
@@ -331,7 +337,12 @@ function infusionsoftaffiliates_findcode()
 #			# [Magic URL Changing Code Goes Here]
 #			return $root;
 
-			wp_redirect(site_url().'/'.implode('/', $urlparts).'?'.infusionsoftaffiliates_defaultcodename().'='.$root);
+            if((get_option('affiliate_root_redirect') == 'infusionsoft') and get_option('affiliate_infusionsoft_redirect'))
+            {
+                wp_redirect("https://".get_option('infusionsoft_appname').".infusionsoft.com/go/".get_option('affiliate_infusionsoft_redirect')."/$root/?".infusionsoftaffiliates_defaultcodename().'='.$root);
+            } else {
+                wp_redirect(site_url().'/'.implode('/', $urlparts).'?'.infusionsoftaffiliates_defaultcodename().'='.$root);
+            }
 			infusionsoftaffiliates_setcookie($root);
 			exit;
 
@@ -390,9 +401,28 @@ if (is_admin()) {
   add_action('admin_menu', 'admin_menu_infusionsoftaffiliates');
   add_action('save_post', 'infusionsoftaffiliates_updatemeta');
   add_action('wp_ajax_infusionsoftaffiliates_reg', 'infusionsoftaffiliates_ajaxreg');
+  add_action('wp_ajax_check_infusionsoft_redirect', 'infusionsoftaffiliates_check_infusionsoft_redirect' );
 } else {
 #  add_action('send_headers', 'infusionsoftaffiliates_checkrequest');
   add_action('wp', 'infusionsoftaffiliates_checkrequest');
+}
+
+function infusionsoftaffiliates_check_infusionsoft_redirect() {
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, "https://".get_option('infusionsoft_appname').".infusionsoft.com/go/".$_REQUEST['code']);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HEADER, true);
+    $result = curl_exec($ch);
+    $header = substr($result, 0, curl_getinfo($ch, CURLINFO_HEADER_SIZE));
+
+    if (preg_match('/404 Not Found/', $header)) {
+        echo "Invalid";
+    } elseif (preg_match('/Location: /', $header)) {
+        echo "Valid";
+    } else {
+        echo "Not sure";
+    }
+    die(); // this is required to return a proper result
 }
 
 function syncaffiliates()

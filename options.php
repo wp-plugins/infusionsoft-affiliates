@@ -12,10 +12,10 @@ function iaregister_reg() {
 </script>
 <div class="wrap">
 <div id="icon-plugins" class="icon32"></div>
-<h2>Infusionsoft Affiliates</h2>
+<h2>Infusionsoft Affiliates (Referral Partners)</h2>
 
 <p>
-Please enter your Infusionsoft API Key below so that we can access affiliates from your system.
+Please enter your Infusionsoft API Key below so that we can retrieve all of your referral partners from Infusionsoft.
 
 <form method="post" action="options.php">
 <?php wp_nonce_field('update-options'); ?>
@@ -25,7 +25,7 @@ Please enter your Infusionsoft API Key below so that we can access affiliates fr
 
 <tr valign="top">
 <th scope="row">Infusionsoft App Name:</th>
-<td>https://<input type="text" name="infusionsoft_appname" value="<?php echo get_option('infusionsoft_appname'); ?>" size="8" />.Infusionsoft.com</td>
+<td>https://<input type="text" name="infusionsoft_appname" id="infusionsoft_appname" value="<?php echo get_option('infusionsoft_appname'); ?>" size="8" />.Infusionsoft.com</td>
 </tr>
 
 
@@ -36,7 +36,7 @@ Please enter your Infusionsoft API Key below so that we can access affiliates fr
 
 
 <tr valign="top">
-<th scope="row">Affiliate Caching:</th>
+<th scope="row">Referral Partner Caching:</th>
 <td>
   <select name="affiliate_caching">
     <option value="none" <?php if (get_option('affiliate_caching') == 'none') echo "selected=selected" ?>>Do Not Cache</option>
@@ -66,33 +66,53 @@ Please enter your Infusionsoft API Key below so that we can access affiliates fr
 </tr>
 
 <tr valign="top">
-<th scope="row">Load Affiliates When:</th>
+<th scope="row">Load Refferal Partner When:</th>
 <td>
-    <input type="checkbox" name="affiliate_load_root"   value="1" <?php checked(get_option('affiliate_load_root'));  ?>>
-	An affiliate code is in the root of the URL (will redirect)<br/>
+    <input type="checkbox" name="affiliate_load_root" id="affiliate_load_root" value="1" <?php checked(get_option('affiliate_load_root'));  ?>>
+	A Referral Partner code is in the root of the URL<br/>
     <input type="checkbox" name="affiliate_load_param"  value="1" <?php checked(get_option('affiliate_load_param')); ?>>
-	An affiliate code is in the query string <br/>
+	An Referral Partner code is in the query string <br/>
     <input type="checkbox" name="affiliate_load_cookie" value="1"<?php checked(get_option('affiliate_load_cookie')); ?>>
-	An affiliate code is in a cookie <br/>
+	An Referral Partner code is in a cookie <br/>
 </td>
 </tr>
 
-<tr valign="top">
-<th scope="row">Affiliate Code Names:</th>
-<td><input type="text" name="affiliatecode_names" value="<?php echo get_option('affiliatecode_names'); ?>" size="48" /></td>
+    <tr valign="top" id="rooturloption">
+        <th scope="row">Root URL Redirect:</th>
+        <td><select name="affiliate_root_redirect" id="affiliate_root_redirect">
+            <option value="">Redirect back to default page below</option>
+            <option value="infusionsoft" <?php if (get_option('affiliate_root_redirect') == 'infusionsoft') echo "selected=selected" ?>>Redirect through Infusionsoft</option>
+        </select></td>
+    </tr>
+
+    <tr valign="top" id="infusionsoftredirectoption">
+        <th scope="row">Infusionsoft Redirect Code:</th>
+        <td>When a visitor acceses your site with a Referral Partner Code in the root of the URL, we'll redirect them
+            through Infusionsoft to get cookied and then back to your site. What Infusionsoft Referral Partner Tracking Link should we send visitors to?<br/>
+            https://<span class="appname">blah</span>.infusionsoft.com/go/<input type="text" name="affiliate_infusionsoft_redirect" id="affiliate_infusionsoft_redirect" placeholder="code..." value="<?php echo get_option('affiliate_infusionsoft_redirect'); ?>"size="8">/
+            <span id="infusionsoftcodecheck"></span>
+            <br/>
+            <b>Important:</b> Make sure you configure this in Infusionsoft to redirect back to <?php echo(get_bloginfo('url')); ?>
+        </td>
+    </tr>
+
+    <tr valign="top">
+<th scope="row">Code Names:</th>
+<td>What query parameters should we look for to indicate a Referral Partner code?<br/>
+    <input type="text" name="affiliatecode_names" value="<?php echo get_option('affiliatecode_names'); ?>" size="48" /></td>
 </tr>
 
 <tr valign="top">
-<th scope="row">Default Affiliate Page:</th>
+<th scope="row">Default Page:</th>
 <td>
-Select which page will be shown when there is a valid affiliate, but no page specified.<br/>
+Select which page will be shown when there is a valid Referral Partner, but no page specified.<br/>
 <?php wp_dropdown_pages(array('name' => 'affiliate_defaultpage', 'selected' => get_option('affiliate_defaultpage'), 'show_option_none' => '(Use Site Default)')); ?>
 </td>
 </tr>
 
 <tr valign="top">
-<th scope="row">Default No Affiliate Page:</th>
-<td>Select which page will be shown when there is no valid affiliate code found:<br/>
+<th scope="row">Default No Code Page:</th>
+<td>Select which page will be shown when there is no valid Referral Partner code found:<br/>
 <?php wp_dropdown_pages(array('name' => 'noaffiliate_defaultpage', 'selected' => get_option('noaffiliate_defaultpage'), 'show_option_none' => '(Show Requested Page)')); ?>
 </td>
 </tr>
@@ -186,3 +206,45 @@ Sure. <a href="http://asandia.com/" target="_blank">Contact Jeremy B. Shapiro</a
 </ol>
 
 </div>
+
+<script type="text/javascript">
+    jQuery('#infusionsoftredirectoption').hide();
+    jQuery('#rooturloption').hide();
+
+    jQuery('#infusionsoft_appname').change(function() {
+        jQuery('.appname').text(jQuery(this).val());
+    }).change();
+
+    jQuery('#affiliate_load_root').change(function(){
+        if(jQuery(this).is(':checked'))
+        {
+            jQuery('#rooturloption').fadeIn();
+            jQuery('#affiliate_root_redirect').change();
+        } else {
+            jQuery('#rooturloption').fadeOut();
+            jQuery('#infusionsoftredirectoption').fadeOut();
+        }
+
+    }).change();
+
+    jQuery('#affiliate_root_redirect').change(function() {
+        if(jQuery(this).val() == "infusionsoft")
+        {
+            jQuery('#infusionsoftredirectoption').fadeIn();
+        } else {
+            jQuery('#infusionsoftredirectoption').fadeOut();
+        }
+    }).change();
+
+    jQuery('#affiliate_infusionsoft_redirect').change(function() {
+        jQuery('#infusionsoftcodecheck').text('Checking...');
+        jQuery.get(ajaxurl, {action: 'check_infusionsoft_redirect', code: jQuery(this).val()},
+                function(data) {
+                    jQuery('#infusionsoftcodecheck').html((data == 'Valid') ?
+                            '<span style="color:green;">Looks Good!</span>':
+                            '<span style="color: red; font-weight: bold;">Invalid Code!</span>'
+                    );
+                });
+    });
+
+</script>

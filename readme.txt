@@ -3,22 +3,22 @@ Contributors: jeremyshapiro
 Tags: affiliates, affiliate program, infusion, infusionsoft, tracking, jeremy shapiro, webinar, webinars, personalization, caching
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=6FEVZ7NU86DNN
 Requires at least: 2.0.2
-Tested up to: 3.5
-Stable tag: 2.3
+Tested up to: 3.9
+Stable tag: 2.4
 
 This plugin allows you to load an Infusionsoft Affiliate's information into your wordpress pages using the [affiliate] shortcode.
 
 == Description ==
 
-After you configure your Infusionsoft Affiliate plugin, you'll be able to sync up your affiliates to your WordPress site and add in affiliate specific merge fields.
+After you configure your Infusionsoft Affiliate plugin, you'll be able to sync up your affiliates (Referral Partners) to your WordPress site and add in affiliate specific merge fields.
 
 Where might you use this?
 
-* Personalized sales pages for your affiliates to use in promoting your product
-* Personalized opt-in pages that appear to be written by your affiliate
-* Custom webinar sign up forms, one for each affiliate
+* Personalized sales pages for your referral partners to use in promoting your product
+* Personalized opt-in pages that appear to be written by your referral partners
+* Custom webinar sign up forms, one for each referral partner
 
-Use the `[affiliate]` shortcode with a specific field; for example, to get the affiliate's name, use `[affiliate field="AffName"]`.
+Use the `[affiliate]` shortcode with a specific field; for example, to get the referral partner's name, use `[affiliate field="AffName"]`.
 
 You can also specify a `default` value like `[affiliate field="AffName" default="your friend"]`.
 
@@ -30,7 +30,7 @@ When using `dateshift`, the value should start with a `+` or a `-` followed by a
 
 If you are returning any HTML code, for example a tracking pixel, an image tag, rich HTML, etc... you may want to specify `htmldecode=1` to prevent WordPress from escaping your HTML.
 
-All your custom affiliate fields get pulled down, too, just don't forget to put the underscore in front, i.e. _YourCustomField.
+All your custom referral partner fields get pulled down, too, just don't forget to put the underscore in front, i.e. _YourCustomField.
 
 == Installation ==
 
@@ -45,6 +45,9 @@ To configure your installation, click Settings and then select enter your Infusi
 If you need help with a custom installation or modification to better integrate into your Infusionsoft application and WordPress site, please contact Jeremy B. Shapiro directly.
 
 == Changelog ==
+
+= Version 2.4 =
+* 7/7/2014: Allow root specified referral partner codes to redirect through Infusionsoft (to cookie the visitor in Infusionsoft)
 
 = Version 2.3 =
 * 4/22/2013: When manually syncing affiliates, output the number of affiliates synced and exit (previously processed the page as usual which was confusing)
